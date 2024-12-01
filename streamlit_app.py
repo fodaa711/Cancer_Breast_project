@@ -1,5 +1,3 @@
-
-
 import streamlit as st
 import pandas as pd
 import seaborn as sns
@@ -14,7 +12,7 @@ uploaded_file = st.sidebar.file_uploader("Upload a CSV file", type=["csv"])
 
 if uploaded_file is not None:
     try:
-        # Load Data
+        # Attempt to load the dataset
         df = pd.read_csv(uploaded_file)
         st.subheader("Dataset Overview")
         st.write("First 5 Rows of the Dataset:")
@@ -23,7 +21,9 @@ if uploaded_file is not None:
         # Dataset Information
         st.subheader("Dataset Information")
         with st.expander("Click to view dataset info"):
-            st.text(df.info())
+            buffer = pd.io.formats.format.StringIO()
+            df.info(buf=buffer)
+            st.text(buffer.getvalue())
 
         # Checking for duplicates
         duplicates = df.duplicated().sum()
@@ -47,13 +47,18 @@ if uploaded_file is not None:
         # Data Visualization
         st.subheader("Data Visualization")
         st.write("Correlation Heatmap")
-        fig, ax = plt.subplots(figsize=(10, 8))
-        sns.heatmap(df.corr(), annot=True, fmt='.2f', cmap='coolwarm', ax=ax)
-        st.pyplot(fig)
+
+        # Convert non-numeric columns to numeric or exclude them
+        numeric_df = df.select_dtypes(include=['number'])
+
+        if numeric_df.empty:
+            st.write("No numeric columns available for correlation heatmap.")
+        else:
+            fig, ax = plt.subplots(figsize=(10, 8))
+            sns.heatmap(numeric_df.corr(), annot=True, fmt='.2f', cmap='coolwarm', ax=ax)
+            st.pyplot(fig)
 
     except Exception as e:
-        st.error(f"An error occurred: {e}")
-
+        st.error(f"An error occurred while processing the file: {e}")
 else:
     st.write("Please upload a dataset to begin analysis.")
-
