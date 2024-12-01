@@ -3,6 +3,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pickle  # For loading the predictive model
+from sklearn.preprocessing import StandardScaler  # For scaling (if needed)
 
 # Streamlit App Title
 st.title("Breast Cancer Data Analysis and Prediction")
@@ -67,10 +68,22 @@ st.sidebar.header("Breast Cancer Prediction")
 
 # Load the predictive model
 model_file = st.sidebar.file_uploader("Upload your trained model (e.g., .pkl file)", type=["pkl"])
+scaler_file = st.sidebar.file_uploader("Upload your scaler (e.g., .pkl file, optional)", type=["pkl"])
+
 if model_file is not None:
     try:
         # Load the model
         model = pickle.load(model_file)
+
+        # Load the scaler (if provided)
+        scaler = None
+        if scaler_file is not None:
+            scaler = pickle.load(scaler_file)
+
+        # Display expected feature names
+        if hasattr(model, "feature_names_in_"):
+            st.write("The model expects these feature names:")
+            st.write(model.feature_names_in_)
 
         # Input form for predictions
         st.subheader("Make a Prediction")
@@ -88,24 +101,30 @@ if model_file is not None:
         mean_symmetry = st.number_input("Mean Symmetry")
         mean_fractal_dimension = st.number_input("Mean Fractal Dimension")
 
-        # Collect input features
+        # Collect input features with correct names
         input_data = pd.DataFrame({
-            "mean_radius": [mean_radius],
-            "mean_texture": [mean_texture],
-            "mean_perimeter": [mean_perimeter],
-            "mean_area": [mean_area],
-            "mean_smoothness": [mean_smoothness],
-            "mean_compactness": [mean_compactness],
-            "mean_concavity": [mean_concavity],
-            "mean_concave_points": [mean_concave_points],
-            "mean_symmetry": [mean_symmetry],
-            "mean_fractal_dimension": [mean_fractal_dimension],
+            "radius_mean": [mean_radius],
+            "texture_mean": [mean_texture],
+            "perimeter_mean": [mean_perimeter],
+            "area_mean": [mean_area],
+            "smoothness_mean": [mean_smoothness],
+            "compactness_mean": [mean_compactness],
+            "concavity_mean": [mean_concavity],
+            "concave points_mean": [mean_concave_points],
+            "symmetry_mean": [mean_symmetry],
+            "fractal_dimension_mean": [mean_fractal_dimension],
         })
+
+        # Apply scaler if available
+        if scaler:
+            input_data_scaled = pd.DataFrame(scaler.transform(input_data), columns=input_data.columns)
+        else:
+            input_data_scaled = input_data  # Use raw input if no scaler is provided
 
         # Make prediction
         if st.button("Predict"):
-            prediction = model.predict(input_data)[0]
-            prediction_proba = model.predict_proba(input_data)[0]
+            prediction = model.predict(input_data_scaled)[0]
+            prediction_proba = model.predict_proba(input_data_scaled)[0]
 
             st.subheader("Prediction Result")
             if prediction == 1:
@@ -114,6 +133,10 @@ if model_file is not None:
                 st.write("The model predicts: **Benign**")
 
             st.write(f"Prediction Probabilities: {prediction_proba}")
+
     except Exception as e:
-        st.error(f"Failed to load the model: {e}")
+        st.error(f"Failed to load the model or scaler: {e}")
+else:
+    st.write("Please upload the model file to make predictions.")
+
 
