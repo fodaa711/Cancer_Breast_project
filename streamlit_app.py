@@ -2,9 +2,10 @@ import streamlit as st
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import pickle  # For loading the predictive model
 
 # Streamlit App Title
-st.title("Breast Cancer Data Analysis")
+st.title("Breast Cancer Data Analysis and Prediction")
 
 # File Upload Section
 st.sidebar.header("Upload Your Dataset")
@@ -12,7 +13,7 @@ uploaded_file = st.sidebar.file_uploader("Upload a CSV file", type=["csv"])
 
 if uploaded_file is not None:
     try:
-        # Attempt to load the dataset
+        # Load the dataset
         df = pd.read_csv(uploaded_file)
         st.subheader("Dataset Overview")
         st.write("First 5 Rows of the Dataset:")
@@ -48,9 +49,7 @@ if uploaded_file is not None:
         st.subheader("Data Visualization")
         st.write("Correlation Heatmap")
 
-        # Convert non-numeric columns to numeric or exclude them
         numeric_df = df.select_dtypes(include=['number'])
-
         if numeric_df.empty:
             st.write("No numeric columns available for correlation heatmap.")
         else:
@@ -62,3 +61,48 @@ if uploaded_file is not None:
         st.error(f"An error occurred while processing the file: {e}")
 else:
     st.write("Please upload a dataset to begin analysis.")
+
+# Predictive System
+st.sidebar.header("Breast Cancer Prediction")
+
+# Load the predictive model
+model_file = st.sidebar.file_uploader("Upload your trained model (e.g., .pkl file)", type=["pkl"])
+if model_file is not None:
+    try:
+        model = pickle.load(model_file)
+
+        # Input form for predictions
+        st.subheader("Make a Prediction")
+        st.write("Provide the input features below:")
+
+        # Adjust the input fields based on your model's requirements
+        mean_radius = st.number_input("Mean Radius")
+        mean_texture = st.number_input("Mean Texture")
+        mean_perimeter = st.number_input("Mean Perimeter")
+        mean_area = st.number_input("Mean Area")
+        mean_smoothness = st.number_input("Mean Smoothness")
+
+        # Collect input features
+        input_data = pd.DataFrame({
+            "mean_radius": [mean_radius],
+            "mean_texture": [mean_texture],
+            "mean_perimeter": [mean_perimeter],
+            "mean_area": [mean_area],
+            "mean_smoothness": [mean_smoothness],
+        })
+
+        # Make prediction
+        if st.button("Predict"):
+            prediction = model.predict(input_data)[0]
+            prediction_proba = model.predict_proba(input_data)[0]
+
+            st.subheader("Prediction Result")
+            if prediction == 1:
+                st.write("The model predicts: **Malignant**")
+            else:
+                st.write("The model predicts: **Benign**")
+
+            st.write(f"Prediction Probabilities: {prediction_proba}")
+    except Exception as e:
+        st.error(f"Failed to load the model: {e}")
+
