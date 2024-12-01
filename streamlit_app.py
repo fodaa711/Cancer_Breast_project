@@ -138,5 +138,63 @@ if model_file is not None:
         st.error(f"Failed to load the model or scaler: {e}")
 else:
     st.write("Please upload the model file to make predictions.")
+    # Load the predictive model
+model_file = st.sidebar.file_uploader("Upload your trained pipeline (e.g., model.pkl)", type=["pkl"])
+
+if model_file is not None:
+    try:
+        # Load the pipeline
+        model = pickle.load(model_file)
+
+        # Display expected feature names
+        if hasattr(model.named_steps["classifier"], "feature_names_in_"):
+            st.write("The model expects these feature names:")
+            st.write(model.named_steps["classifier"].feature_names_in_)
+
+        # Input form for predictions
+        st.subheader("Make a Prediction")
+        st.write("Provide the input features below:")
+
+        # Input fields for each feature
+        mean_radius = st.number_input("Mean Radius")
+        mean_texture = st.number_input("Mean Texture")
+        mean_perimeter = st.number_input("Mean Perimeter")
+        mean_area = st.number_input("Mean Area")
+        mean_smoothness = st.number_input("Mean Smoothness")
+        mean_compactness = st.number_input("Mean Compactness")
+        mean_concavity = st.number_input("Mean Concavity")
+        mean_concave_points = st.number_input("Mean Concave Points")
+        mean_symmetry = st.number_input("Mean Symmetry")
+        mean_fractal_dimension = st.number_input("Mean Fractal Dimension")
+
+        # Collect input features
+        input_data = pd.DataFrame({
+            "radius_mean": [mean_radius],
+            "texture_mean": [mean_texture],
+            "perimeter_mean": [mean_perimeter],
+            "area_mean": [mean_area],
+            "smoothness_mean": [mean_smoothness],
+            "compactness_mean": [mean_compactness],
+            "concavity_mean": [mean_concavity],
+            "concave points_mean": [mean_concave_points],
+            "symmetry_mean": [mean_symmetry],
+            "fractal_dimension_mean": [mean_fractal_dimension],
+        })
+
+        # Make prediction
+        if st.button("Predict"):
+            prediction = model.predict(input_data)[0]
+            prediction_proba = model.predict_proba(input_data)[0]
+
+            st.subheader("Prediction Result")
+            if prediction == 1:
+                st.write("The model predicts: **Malignant**")
+            else:
+                st.write("The model predicts: **Benign**")
+
+            st.write(f"Prediction Probabilities: {prediction_proba}")
+
+    except Exception as e:
+        st.error(f"Failed to load the model: {e}")
 
 
