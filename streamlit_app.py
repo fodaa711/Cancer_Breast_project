@@ -69,18 +69,24 @@ st.sidebar.header("Breast Cancer Prediction")
 model_file = st.sidebar.file_uploader("Upload your trained model (e.g., .pkl file)", type=["pkl"])
 if model_file is not None:
     try:
+        # Load the model
         model = pickle.load(model_file)
 
         # Input form for predictions
         st.subheader("Make a Prediction")
         st.write("Provide the input features below:")
 
-        # Adjust the input fields based on your model's requirements
+        # Input fields for each feature
         mean_radius = st.number_input("Mean Radius")
         mean_texture = st.number_input("Mean Texture")
         mean_perimeter = st.number_input("Mean Perimeter")
         mean_area = st.number_input("Mean Area")
         mean_smoothness = st.number_input("Mean Smoothness")
+        mean_compactness = st.number_input("Mean Compactness")
+        mean_concavity = st.number_input("Mean Concavity")
+        mean_concave_points = st.number_input("Mean Concave Points")
+        mean_symmetry = st.number_input("Mean Symmetry")
+        mean_fractal_dimension = st.number_input("Mean Fractal Dimension")
 
         # Collect input features
         input_data = pd.DataFrame({
@@ -89,6 +95,11 @@ if model_file is not None:
             "mean_perimeter": [mean_perimeter],
             "mean_area": [mean_area],
             "mean_smoothness": [mean_smoothness],
+            "mean_compactness": [mean_compactness],
+            "mean_concavity": [mean_concavity],
+            "mean_concave_points": [mean_concave_points],
+            "mean_symmetry": [mean_symmetry],
+            "mean_fractal_dimension": [mean_fractal_dimension],
         })
 
         # Make prediction
